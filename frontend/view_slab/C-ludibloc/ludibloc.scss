@@ -1,0 +1,31 @@
+$ludibloc_0: #c473ac;
+$ludibloc_1: #71a7bd;
+$ludibloc_3: #ac7cc2;
+$ludibloc_bg_equal: #666;
+$ludibloc_fg_equal: #ddd;
+$ludibloc_hover_bg: #ccc;
+$ludibloc_hover_fg: #000;
+$ludibloc_selected: #d8d176;
+.bloc
+{    
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.bloc:hover
+{
+    background-color: $ludibloc_hover_bg;
+    color: $ludibloc_hover_fg;
+    cursor: pointer;
+}
+.pink{ background-color: $ludibloc_0; }
+.blue{ background-color: $ludibloc_1; }
+.purple{ background-color: $ludibloc_3; }
+.black
+{
+    background-color: $ludibloc_bg_equal;
+    color: $ludibloc_fg_equal;
+}
+.first_bloc{ border-radius:15px 0 0 15px; }
+.last_bloc{ border-radius: 0 15px 15px 0; }
+.selected{ background-image: radial-gradient(rgba(0,0,0,0), $ludibloc_selected); }

@@ -1,0 +1,5 @@
+.dark_bloc{ background-color: #000; color:#fff; }
+.gray{ background-color: #aaa; }
+.light_gray{ background-color: #777; }
+.bordl{ border-radius:15px 0px 0px 15px; }
+.bordr{ border-radius:0px 15px 15px 0px; }

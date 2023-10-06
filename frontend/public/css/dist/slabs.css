@@ -1,0 +1,82 @@
+.ludi-header {
+  margin: auto;
+  margin-top: 0;
+}
+
+.ludi-header-title {
+  background-color: #000;
+  border-radius: 15px 15px 0 0;
+  margin: 0;
+  margin: auto;
+  padding: 0;
+  width: 100%;
+  /*max-width: 675px;*/
+  color: #fff;
+  text-align: center;
+}
+
+.ludi-header-score_level {
+  background-color: #999;
+  border-radius: 0 0 15px 15px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin: auto;
+  width: 100%;
+  /*max-width: 675px;*/
+}
+
+.ludiwindow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: auto;
+  margin-top: 20px;
+  padding: 0;
+}
+
+.ludiquation {
+  display: flex;
+  width: fit-content;
+}
+
+.bloc {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bloc:hover {
+  background-color: #ccc;
+  color: #000;
+  cursor: pointer;
+}
+
+.pink {
+  background-color: #c473ac;
+}
+
+.blue {
+  background-color: #71a7bd;
+}
+
+.purple {
+  background-color: #ac7cc2;
+}
+
+.black {
+  background-color: #666;
+  color: #ddd;
+}
+
+.first_bloc {
+  border-radius: 15px 0 0 15px;
+}
+
+.last_bloc {
+  border-radius: 0 15px 15px 0;
+}
+
+.selected {
+  background-image: radial-gradient(rgba(0, 0, 0, 0), #d8d176);
+}
