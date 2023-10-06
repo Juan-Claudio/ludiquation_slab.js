@@ -1,4 +1,4 @@
-import Slab from "../../../../libs/slabjs_new/Slab_new.js";
+import { Slab } from "../../../../libs/slab.js";
 import ludiwindowHtml from "./ludiwindow.html.js";
 import Ludiquation from '../B-ludiquation/ludiquation.js';
 import Ludibloc from '../C-ludibloc/ludibloc.js';

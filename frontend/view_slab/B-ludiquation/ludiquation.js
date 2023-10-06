@@ -1,4 +1,4 @@
-import Slab from "../../../../libs/slabjs_new/Slab_new.js";
+import { Slab } from "../../../../libs/slab.js";
 import ludiquationHtml from "./ludiquation.html.js";
 
 const ludiquation = new Slab(ludiquationHtml);

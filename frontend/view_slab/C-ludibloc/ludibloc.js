@@ -1,4 +1,4 @@
-import Slab from "../../../../libs/slabjs_new/Slab_new.js";
+import { Slab } from "../../../../libs/slab.js";
 import ludiblocEvents from "./ludibloc.events.js";
 import ludiblocHtml from "./ludibloc.html.js";
 import ludiblocStyle from "./ludibloc.style.js";
