@@ -31,3 +31,12 @@
   cursor: pointer;
   width: 32px;
 }
+
+.header-btn {
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: x-large;
+}

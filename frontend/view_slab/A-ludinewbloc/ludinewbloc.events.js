@@ -1,4 +1,5 @@
 import Interactions from "../../../backend/controller/Interactions.js";
+import ludiscreencess from "../A-ludiscreencess/ludiscreencess.js";
 
 export default function(data)
 {
@@ -11,12 +12,13 @@ export default function(data)
             let mess =  Interactions.replaceSelectionByNewBloc(
                 $('#newBlocContent').val()
             );
-            alert(Interactions.trad(mess));
             if(mess==='correct' || mess=='err:noBlocSelected')
             {
                 Interactions.unselectAll();
                 $('.ludinewbloc').hide();
+                if(mess==='correct'){ ludiscreencess.alert();return; }
             }
+            alert(Interactions.trad(mess));
         }],
 
         '#validate_2newBlocs': ['click', function(){
@@ -33,7 +35,7 @@ export default function(data)
                 case 'correct':
                     Interactions.unselectAll();
                     $('.ludinewbloc').hide();
-                    if(mess==='correct'){ return }
+                    if(mess==='correct'){ return; }
                 default:
                     alert(Interactions.trad(mess));
                     break;

@@ -131,7 +131,7 @@ export default class Interactions
 
     static multiply_divide(string)
     {
-        console.warn('in: '+string);
+        //console.warn('in: '+string);
         let secu = 0;
         
         while(/[\/×]/.test(string) && secu<=800)
@@ -150,7 +150,7 @@ export default class Interactions
             })
             secu++;
         }
-        console.warn('out: '+string);
+        //console.warn('out: '+string);
         return string;
     }
 
@@ -178,6 +178,8 @@ export default class Interactions
 
     static calculate(decoded_member_string)
     {
+        if(decoded_member_string===''){ return 0.0; }
+
         //1)replace parenthesis by value
         let This = this;
         //let secu = 0;
@@ -280,10 +282,8 @@ export default class Interactions
         let isNewBlocValid = false;
 
         //member after replace by new bloc
-        workingEquation[bloc1Id_arr[1]]=contentValid; //before =''
+        workingEquation[bloc1Id_arr[1]]=contentValid;
         if(selectedBlocsNb===2){ workingEquation[bloc2Id_arr[1]]=''; }
-        //if(isLeftMember){ workingEquation.unshift(contentValid);equalId++; }
-        //else{ workingEquation.push(contentValid); }
         console.log('%cEquation after replace%c', 'color:#9f1');
         console.log(workingEquation);
         
@@ -341,6 +341,60 @@ export default class Interactions
         return 'correct';
     }
 
+    static remove2blocs()
+    {
+        //1)Is two blocs selected ?
+        if(Server.get_selected_blocs_nb()!==2)
+        { return 'err:2selectedBlocksNeeded' }
+
+        //2)calculate member before cancel out
+        let bloc1_id = this.blocId_toIntArr( Server.get_selected_bloc(0) );
+        let bloc2_id = this.blocId_toIntArr( Server.get_selected_bloc(1) );
+        let equation = Server.get_equation(bloc1_id[0]);
+        let equalId = equation.indexOf('=');
+        let workingEquation = [].concat( equation );
+        let member = '';
+        let member_value_before = 0;
+        let member_value_after = 0;
+        let isLeftMember = bloc1_id[1]<equalId;
+
+        //calulate member value before cancel out
+        member = this.replace_unknowns(
+            workingEquation.filter((val, index)=>{
+                return ( (isLeftMember) ? index<equalId : index>equalId )
+            }).join('')
+        );
+        member_value_before = this.calculate(member); //float
+        console.info(member);
+        console.info(member_value_before);
+
+        //3)calculate member after cancel out
+        member = this.replace_unknowns(
+            workingEquation.filter((val, id)=>{
+                if(id!==bloc1_id[1] && id!==bloc2_id[1])
+                {
+                    return ( (isLeftMember) ? id<equalId : id>equalId )
+                }
+                return false
+            }).join('')
+        );
+        member_value_after = this.calculate(member); //float
+        console.info(member);
+        console.info(member_value_after);
+        
+        if(member_value_before===member_value_after)
+        {
+            Server.set_equation_byId(
+                bloc1_id[0],
+                workingEquation.filter((val, id)=>{
+                    return (id!==bloc1_id[1] && id!==bloc2_id[1])
+                })
+            );
+            return 'correct';
+        }
+        return 'err:notCancelOut';
+    }
+
     static trad(mess)
     {
         let traduc = {
@@ -357,7 +411,8 @@ export default class Interactions
             noBlocSelected:`Hmm.. You didn't select any block...`,
             noEqualBloc:`This block is not equal to the selection.`,
             noBlocSelectedEq:`I need almost one selected block to know what equation.`,
-            tooMuchBlocs:`Too much blocks in the game. Combine blocs to do some space.`
+            tooMuchBlocs:`Too much blocks in the game. Combine blocs to do some space.`,
+            notCancelOut:`Arf! These two blocks do not cancel each other out.`
         };
         if(!/^err:/.test(mess))
         {

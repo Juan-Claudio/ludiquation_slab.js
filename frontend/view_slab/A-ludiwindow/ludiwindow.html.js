@@ -5,7 +5,7 @@ export default function(data)
 {
     return (
         new Html()
-        .div({class:'ludiwindow'}).htmlist(data.equations_data, ludiquationHtml).end()
+        .main({class:'ludiwindow'}).htmlist(data.equations_data, ludiquationHtml).end()
         .export
     );
 }
