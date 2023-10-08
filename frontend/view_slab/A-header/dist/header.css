@@ -1,6 +1,7 @@
 .ludi-header {
   margin: auto;
   margin-top: 0;
+  max-width: 100%;
 }
 
 .ludi-header-title {
@@ -24,4 +25,9 @@
   margin: auto;
   width: 100%;
   /*max-width: 675px;*/
+}
+
+.ludi-actions {
+  cursor: pointer;
+  width: 32px;
 }

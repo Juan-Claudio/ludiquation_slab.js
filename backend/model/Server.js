@@ -9,6 +9,14 @@ export default class Server
     static show_selection(){ console.log(`%cSELECTION: ${this.get_selected_blocs()}%c`, 'color:#925') }
     
     //GETTERS
+    static get_all_blocs_nb()
+    {
+        return this.equationsData().equations.reduce(
+            function(acc, currVal, id, arr){
+                acc = (id===1) ? arr[0].length : acc;
+                return acc+currVal.length;
+        });
+    }
     static get_selected_blocs(){ return this.#selected_blocs; }
     static get_selected_blocs_nb(){ return this.#selected_blocs.length; }
     static get_selected_bloc(nb){ return this.#selected_blocs[nb]; }

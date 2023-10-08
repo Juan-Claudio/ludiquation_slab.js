@@ -1,7 +1,7 @@
 import Server from "../model/Server.js";
 
 export default class Interactions
-{    
+{        
     static blocId_toIntArr(str)//:[int,int]
     {
         return (
@@ -96,7 +96,7 @@ export default class Interactions
         let unknowns = Server.equationsData().unknowns; //{a:15,b:17,c:5,d:1/2,x:-2};
         let regExp_str = '[';
 
-        //add × before or after parentesis
+        //add × before or after parenthesis
         member_str = member_str.replace(/\w\(|\)\w/g, function(match){
             return match.replace(/\(/,'×(').replace(/\)/,')×');
         });
@@ -131,20 +131,26 @@ export default class Interactions
 
     static multiply_divide(string)
     {
+        console.warn('in: '+string);
         let secu = 0;
-        //console.info('Interactions.multiply_divide("'+string+'":string);');
+        
         while(/[\/×]/.test(string) && secu<=800)
         {
             //console.info('Enter in the while with string = "'+string+'"');
             string = string.replace(/[-+]*\d+(\.\d+)*[×\/][-+]*\d+(\.\d+)*/, function(match){
                 let curr_op = match.split(/[×\/]/);
+                let resDiv = 0;
+                let resPro = 0;
                 curr_op[0] = parseFloat(curr_op[0]);
                 curr_op[1] = parseFloat(curr_op[1]);
-                if(/×/.test(match)){ return (curr_op[0]*curr_op[1])+''; }
-                else{ return (curr_op[0]/curr_op[1])+''; }
+                resPro = curr_op[0]*curr_op[1];
+                resDiv = curr_op[0]/curr_op[1];
+                if(/×/.test(match)){ return (resPro>0) ? '+'+resPro : resPro+''; }
+                else{ return (resDiv>0) ? '+'+resDiv : resDiv+''; }
             })
             secu++;
         }
+        console.warn('out: '+string);
         return string;
     }
 
@@ -159,7 +165,7 @@ export default class Interactions
         return result;
     }
 
-    //calculate string of operations without parentesis
+    //calculate string of operations without parenthesis
     static calculate_portion(string)//:float
     {
         //1) simplify signs
@@ -172,7 +178,7 @@ export default class Interactions
 
     static calculate(decoded_member_string)
     {
-        //1)replace parentesis by value
+        //1)replace parenthesis by value
         let This = this;
         //let secu = 0;
         while(/\(/.test(decoded_member_string)/* && secu<=800*/)
@@ -187,13 +193,60 @@ export default class Interactions
         return this.calculate_portion(decoded_member_string);
     }
 
+    static isContentValid(content, doubleBloc=false)
+    {
+        //preformat content string
+        content = this.simplySign(content.replace(/\s/g,'').toLowerCase());
+                    
+        if(content===''){ return 'err:empty'; }
+        if(content.length>7){ return 'err:length'; }
+
+        //check if not contains invalid char
+        if(/[^a-z0-9\-\+\/\*×÷:\(\),\.]/.test(content)){ return 'err:invalid'; }
+        
+        //check if parenthesis correctly opened and closed
+        let parentOpNb = (content.match(/\(/g) ?? []).length;
+        let parentClNb = (content.match(/\)/g) ?? []).length;
+        if(parentOpNb!==parentClNb){ return 'err:parent'; }
+        if(content.indexOf('(')>content.indexOf(')')){ return 'err:parent'; }
+
+        //check first and last char according to type of new bloc
+        let firstChar_pattern = /^[,\.\/\*×÷:\)]/;
+        if(doubleBloc){ firstChar_pattern = /^[^\+\-\*\/×÷:]/; }
+        if(firstChar_pattern.test(content)){ return 'err:firstChar'; }
+        if(/[^\)0-9a-z]$/.test(content)){ return 'err:lastChar'; }
+        
+        //check succession of chars
+        if(/[^0-9][,\.]/.test(content)){ return 'err:dot'; }
+        if(/[,\.][^0-9]/.test(content)){ return 'err:dot'; }
+        if(/[,\.][0-9]+[,\.]/.test(content)){ return 'err:dot'; }
+        if(/[\+\-][^a-z0-9\(]/.test(content)){ return 'err:sign'; }
+        if(/[\/:÷\*×][^0-9a-z\(\+\-]/.test(content)){ return 'err:op'; }
+        if(/[\(][^a-z0-9\+\-\(]/.test(content)){ return 'err:parentOp'; }
+        
+        return (
+            content
+            .replace(/,/g,'.')
+            .replace(/\*/g,'×')
+            .replace(/[÷:]/g,'/')
+            );
+    }
+
     static replaceSelectionByNewBloc(newBlocContent)
     {
         //1)is at least one bloc selected ?
         let selectedBlocsNb = Server.get_selected_blocs_nb();
-        if(selectedBlocsNb===0){ console.warn('No bloc selected!');return false; }
+        if(selectedBlocsNb===0)
+        {
+            console.warn('No bloc selected!');
+            return 'err:noBlocSelected';
+        }
 
-        //2)calculate member before replace by new bloc
+        //2)is newBlocContent valid ?
+        let contentValid = this.isContentValid(newBlocContent);
+        if(/^err/.test(contentValid)){ return contentValid;}
+
+        //3)calculate member before replace by new bloc
         let bloc1 = Server.get_selected_bloc(0);
         let bloc1Id_arr = this.blocId_toIntArr(bloc1);
         let equalId = this.EqualBlocId_Of(bloc1, true);
@@ -216,10 +269,10 @@ export default class Interactions
             }).join('')
         );
         member_value_before = this.calculate(member); //float
-        console.info('Member %cbefore%c change (unknowns replaced × added before/after parentesis): '+member+' = '+member_value_before, 'font-weight:bold');
+        console.info('Member %cbefore%c change (unknowns replaced × added before/after parenthesis): '+member+' = '+member_value_before, 'font-weight:bold');
         
 
-        //3)calculate member with new bloc
+        //4)calculate member with new bloc
         let bloc2 = (selectedBlocsNb===2) ? Server.get_selected_bloc(1) : false;
         let bloc2Id_arr = (selectedBlocsNb===2) ? this.blocId_toIntArr(bloc2) : false;
         let member_value_after = 0;
@@ -227,11 +280,12 @@ export default class Interactions
         let isNewBlocValid = false;
 
         //member after replace by new bloc
-        workingEquation[bloc1Id_arr[1]]='';
-        if(selectedBlocsNb===2){workingEquation[bloc2Id_arr[1]]='';}
-        if(isLeftMember){ workingEquation.unshift(newBlocContent);equalId++; }
-        else{ workingEquation.push(newBlocContent); }
-        console.log('%cEquation after replace%c'+workingEquation, 'color:#9f1');
+        workingEquation[bloc1Id_arr[1]]=contentValid; //before =''
+        if(selectedBlocsNb===2){ workingEquation[bloc2Id_arr[1]]=''; }
+        //if(isLeftMember){ workingEquation.unshift(contentValid);equalId++; }
+        //else{ workingEquation.push(contentValid); }
+        console.log('%cEquation after replace%c', 'color:#9f1');
+        console.log(workingEquation);
         
         member = this.replace_unknowns(
             workingEquation.map((val, index)=>{
@@ -240,11 +294,78 @@ export default class Interactions
             }).join('')
         );
         member_value_after = this.calculate(member); //float
-        console.info('Member %cafter%c change (unknowns replaced × added before/after parentesis): '+member+' = '+member_value_after, 'font-weight:bold');
+        console.info('Member %cafter%c change (unknowns replaced × added before/after parenthesis): '+member+' = '+member_value_after, 'font-weight:bold');
 
         isNewBlocValid = member_value_before===member_value_after;
 
-        if(isNewBlocValid){ Server.set_equation_byId(bloc1Id_arr[0], workingEquation.filter(function(val){ return val!==''; })); return true; }
-        else{ return false; }
+        if(isNewBlocValid){ Server.set_equation_byId(bloc1Id_arr[0], workingEquation.filter(function(val){ return val!==''; })); return 'correct'; }
+        else{ return 'err:noEqualBloc'; }
+    }
+
+    static addDoubleBloc(newBlocContent)
+    {
+        //1)is at least one bloc selected ?
+        let selectedBlocsNb = Server.get_selected_blocs_nb();
+        if(selectedBlocsNb===0)
+        {
+            console.warn('No bloc selected!');
+            return 'err:noBlocSelectedEq';
+        }
+
+        //2)is newBlocContent valid ?
+        let contentValid = this.isContentValid(newBlocContent, true);
+        if(/^err/.test(contentValid)){ return contentValid;}
+
+        //3)is too much blocs in ludiwindow ?
+        if(Server.get_all_blocs_nb()>40){ return 'err:tooMuchBlocs' }
+
+        //4)add blocs
+        let eqId = this.blocId_toIntArr(Server.get_selected_bloc(0))[0];
+        let equation = Server.get_equation(eqId);
+        let equalId = equation.indexOf('=');
+        switch(contentValid[0])
+        {
+            case '×': 
+            case '/':
+                equation[0] = '('+equation[0]
+                equation[equalId-1] = equation[equalId-1]+')';
+                equation[equalId+1] = '('+equation[equalId+1];
+                equation[equation.length-1] = equation[equation.length-1]+')';
+                break;
+            case '+': break;
+            case '-': break;
+        }
+        
+        equation.splice(equalId,0,contentValid);
+        equation.push(contentValid);
+        return 'correct';
+    }
+
+    static trad(mess)
+    {
+        let traduc = {
+            empty:`Psst! You forgot to introduce value.`,
+            length:`Ay! To more characters in your block. Max. 7.`,
+            invalid:`Outch! Forbidden characters inserted.`,
+            parent:`Oups! Some trouble with your parenthesis.`,
+            firstChar:`Oh! Your first character can't be here.`,
+            lastChar:`Ey! Your new bloc content ends badly.`,
+            dot:`Almost one dot is lost no?`,
+            sign:`Almost one sign '+' or '-' is lost no?`,
+            op:`Almost one operation sign has escaped you!`,
+            parentOp:`Hep! Operation sign lost near a parenthesis.`,
+            noBlocSelected:`Hmm.. You didn't select any block...`,
+            noEqualBloc:`This block is not equal to the selection.`,
+            noBlocSelectedEq:`I need almost one selected block to know what equation.`,
+            tooMuchBlocs:`Too much blocks in the game. Combine blocs to do some space.`
+        };
+        if(!/^err:/.test(mess))
+        {
+            return 'Correct!';
+        }
+        else
+        {
+            return traduc[mess.replace('err:','')] ?? mess;
+        }
     }
 }

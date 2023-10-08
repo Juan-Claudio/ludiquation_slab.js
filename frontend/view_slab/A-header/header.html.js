@@ -10,6 +10,7 @@ export default function(data)
         .h1({class:'ludi-header-title'}).text('Ludiquation').end()
         .div({class:'ludi-header-score_level'})
             .div({class:'ludi-header-score'}).text('Score: '+data.score).end()
+            .img({class:'ludi-actions', alt:'keyboard black keys', src:'frontend/public/img/keyboard_bootstrap.svg'})
             .div({class:'ludi-header-level', id:"test"}).text('Level: '+data.level).end()
 
     .end('all')

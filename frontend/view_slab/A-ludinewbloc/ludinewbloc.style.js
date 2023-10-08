@@ -1,9 +1,9 @@
 export default function(data)
 {
-    return {
+    return {/*
         'selector':
         {
             //ej. width:data.bloc_width
-        }
+        }*/
     }
 }

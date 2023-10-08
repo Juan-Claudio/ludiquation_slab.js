@@ -1,4 +1,4 @@
-.ludi-header{ margin: auto;margin-top:0; }
+.ludi-header{ margin: auto;margin-top:0; max-width:100%; }
 .ludi-header-title
 { 
     background-color:#000;
@@ -27,4 +27,9 @@
 
     width:100%;
     /*max-width: 675px;*/
+}
+.ludi-actions
+{
+    cursor: pointer;
+    width:32px;
 }

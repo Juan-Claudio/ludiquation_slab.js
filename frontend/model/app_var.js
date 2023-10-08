@@ -2,7 +2,7 @@ import Server from '../../backend/model/Server.js';
 import ludiwindow from '../view_slab/A-ludiwindow/ludiwindow.js';
 
 const header_color = '#800';
-const bloc_width = 66;
+const bloc_width = 50;
 const bloc_height = 40;
 const header_width = 12*bloc_width;
 
