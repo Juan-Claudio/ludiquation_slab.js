@@ -27,7 +27,15 @@ export default class Server
     static equationsData()/*:{unknowns,equations}*/{ return this.#equations_data[this.#score_level.level]; }
     static get_equation(id)/*:string[]*/{ return this.equationsData().equations[id]; }
 
+    static get_unknown_value(eqId, letter){ return this.equationsData().unknowns[letter]; }
+
+    static getMove(eqId){ return this.equationsData().moves[eqId]; }
+
     //SETTERS
+    static add100_toScore(){ this.#score_level.score += 100; }
+    static add500_toScore(){ this.#score_level.score += 500; }
+    static addBonus_toScore(eqId){ this.#score_level.score += 100*this.getMove(eqId); }
+
     static select_bloc(bloc)
     {
         if(this.#selected_blocs.length>1){ return false; }
@@ -60,5 +68,11 @@ export default class Server
     {
         this.#score_level.score=score;
         this.#score_level.level=level;
+    }
+
+    static move(eqId)
+    {
+        if(this.equationsData().moves[eqId]>=0)
+        { this.equationsData().moves[eqId]--; }
     }
 }

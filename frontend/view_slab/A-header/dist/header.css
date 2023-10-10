@@ -29,6 +29,9 @@
 
 .ludi-actions {
   cursor: pointer;
+}
+
+.w-32px {
   width: 32px;
 }
 

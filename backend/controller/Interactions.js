@@ -43,6 +43,23 @@ export default class Interactions
         return true;
     }
 
+    static equation_resolved(eqId)
+    {
+        let equation = Server.get_equation(eqId);
+        let unknown = equation[0].replace('+','');
+
+        console.info(`Is win with eq: [${equation.join('][')}] \nUnknown: ${unknown}\n`);
+
+        if(equation.length>3){ console.warn('equation not resolved: length');return false; }
+        if(!/^\+*[a-z]$/.test(equation[0])){ console.warn('equation not resolved: unknown');return false; }
+        if(equation[2] !== Server.get_unknown_value(eqId, unknown)){ console.warn('equation not resolved: result: '+equation[2]+'!='+Server.get_unknown_value(eqId, unknown));return false; }
+        
+        Server.add500_toScore()
+        Server.addBonus_toScore(eqId);
+        console.log('+500!!')
+        return true;
+    }
+
     static reverseEquation(blocEqualId)
     {
         let eqId = this.blocId_toIntArr(blocEqualId)[0];
@@ -59,6 +76,7 @@ export default class Interactions
         }
         eqGroup[eqId] = right_member.concat(['='],left_member);
         Server.set_equationsContent(eqGroup);
+        this.equation_resolved(eqId);
         console.log(`%cEQUATION nº${eqId} REVERSED%c`, "color:#038aac");
     }
 
@@ -122,6 +140,7 @@ export default class Interactions
 
     static simplySign(str)
     {
+        str = str.replace(/\)\(/g, ')×(');
         return str.replace(/[-+]{2,}/g, function(match){
             let nb_less = (/-/.test(match)) ? match.match(/-/g).length : 0;
             if(nb_less%2===0){ return '+'; }
@@ -179,18 +198,20 @@ export default class Interactions
     static calculate(decoded_member_string)
     {
         if(decoded_member_string===''){ return 0.0; }
+        //0) simplify Sign of expression
+        decoded_member_string = this.simplySign(decoded_member_string);
 
         //1)replace parenthesis by value
         let This = this;
-        //let secu = 0;
-        while(/\(/.test(decoded_member_string)/* && secu<=800*/)
+        let secu = 0;
+        while(/\(/.test(decoded_member_string) && secu<=800)
         {
-            decoded_member_string = decoded_member_string.replace(/\([\d-+/×]+\)/g,function(match){
+            decoded_member_string = decoded_member_string.replace(/\([\d-+/×\.]+\)/g,function(match){
                 return This.calculate_portion(match.substring(1,match.length-1));
             })
-            //secu++;
+            secu++;
         }
-
+        if(secu===801){console.error('Interactions.calculate() LOOP ERROR')}
         //2) calculate the remaining expression
         return this.calculate_portion(decoded_member_string);
     }
@@ -236,11 +257,13 @@ export default class Interactions
 
     static replaceSelectionByNewBloc(newBlocContent)
     {
-        //1)is at least one bloc selected ?
         let selectedBlocsNb = Server.get_selected_blocs_nb();
+        let bloc1 = Server.get_selected_bloc(0);
+        let bloc1Id_arr = this.blocId_toIntArr(bloc1);
+
+        //1)is at least one bloc selected ?
         if(selectedBlocsNb===0)
         {
-            console.warn('No bloc selected!');
             return 'err:noBlocSelected';
         }
 
@@ -248,9 +271,9 @@ export default class Interactions
         let contentValid = this.isContentValid(newBlocContent);
         if(/^err/.test(contentValid)){ return contentValid;}
 
+        Server.move(bloc1Id_arr[0]);
+
         //3)calculate member before replace by new bloc
-        let bloc1 = Server.get_selected_bloc(0);
-        let bloc1Id_arr = this.blocId_toIntArr(bloc1);
         let equalId = this.EqualBlocId_Of(bloc1, true);
         let isLeftMember = (bloc1Id_arr[1]<equalId) ? true : false;
         let equation = Server.get_equation(bloc1Id_arr[0]);
@@ -272,7 +295,6 @@ export default class Interactions
         );
         member_value_before = this.calculate(member); //float
         console.info('Member %cbefore%c change (unknowns replaced × added before/after parenthesis): '+member+' = '+member_value_before, 'font-weight:bold');
-        
 
         //4)calculate member with new bloc
         let bloc2 = (selectedBlocsNb===2) ? Server.get_selected_bloc(1) : false;
@@ -298,7 +320,15 @@ export default class Interactions
 
         isNewBlocValid = member_value_before===member_value_after;
 
-        if(isNewBlocValid){ Server.set_equation_byId(bloc1Id_arr[0], workingEquation.filter(function(val){ return val!==''; })); return 'correct'; }
+        if(isNewBlocValid)
+        {
+            Server.set_equation_byId(
+                bloc1Id_arr[0],
+                workingEquation.filter( function(val){ return val!==''; })
+            );
+            this.score(bloc1Id_arr[0]);
+            return 'correct';
+        }
         else{ return 'err:noEqualBloc'; }
     }
 
@@ -342,14 +372,18 @@ export default class Interactions
     }
 
     static remove2blocs()
-    {
-        //1)Is two blocs selected ?
-        if(Server.get_selected_blocs_nb()!==2)
-        { return 'err:2selectedBlocksNeeded' }
-
-        //2)calculate member before cancel out
+    {   
         let bloc1_id = this.blocId_toIntArr( Server.get_selected_bloc(0) );
         let bloc2_id = this.blocId_toIntArr( Server.get_selected_bloc(1) );
+
+        //1)Is two blocs selected ?
+        if(Server.get_selected_blocs_nb()!==2)
+        { return 'err:twoSelectedBlocksNeeded' }
+
+        Server.move(bloc1_id[0]);
+
+        //2)calculate member before cancel out
+        //TODO ADD two blocks equal content ([-+] exclude) ??
         let equation = Server.get_equation(bloc1_id[0]);
         let equalId = equation.indexOf('=');
         let workingEquation = [].concat( equation );
@@ -365,8 +399,6 @@ export default class Interactions
             }).join('')
         );
         member_value_before = this.calculate(member); //float
-        console.info(member);
-        console.info(member_value_before);
 
         //3)calculate member after cancel out
         member = this.replace_unknowns(
@@ -379,8 +411,11 @@ export default class Interactions
             }).join('')
         );
         member_value_after = this.calculate(member); //float
-        console.info(member);
-        console.info(member_value_after);
+        
+        //4)Is only 2 block in the member ?
+        let member_blocks_nb = (isLeftMember) ? equalId : equation.length-(equalId+1) ;
+        console.info(`Member blocks number: ${equation.length} - (${equalId}+1) = ${member_blocks_nb}`);
+        if(member_blocks_nb===2){ return 'err:Only2blocks' }
         
         if(member_value_before===member_value_after)
         {
@@ -390,9 +425,37 @@ export default class Interactions
                     return (id!==bloc1_id[1] && id!==bloc2_id[1])
                 })
             );
+            this.score(bloc1_id[0]);
             return 'correct';
         }
         return 'err:notCancelOut';
+    }
+
+    static combine2blocs()
+    {
+        //1)Is two blocs selected ?
+        if(Server.get_selected_blocs_nb()!==2)
+        { return 'err:twoSelectedBlocksNeeded' }
+
+        //2)Is to blocks stuck ?
+        let bloc1_id = this.blocId_toIntArr( Server.get_selected_bloc(0) );
+        let bloc2_id = this.blocId_toIntArr( Server.get_selected_bloc(1) );
+        if(Math.abs(bloc1_id[1]-bloc2_id[1])!==1){ return 'err:twoBlocksNotStuck'; }
+
+        //3)Is combined block content <= 7 characters ?
+        let equation = Server.get_equation( bloc1_id[0] );
+        let combinedBlocs_content = equation[bloc1_id[1]] + equation[bloc2_id[1]];
+        if(combinedBlocs_content.length>7){ return 'err:combinedLength'; }
+
+        //4)Combined in same order
+        let receiverBlockId = (bloc1_id[1]-bloc2_id[1]<0) ? bloc1_id[1] : bloc2_id[1];
+        console.info(`receiver block: ${equation[receiverBlockId]}`)
+        combinedBlocs_content = (bloc1_id[1]-bloc2_id[1]<0) ? combinedBlocs_content : equation[bloc2_id[1]] + equation[bloc1_id[1]];
+        console.info('receiver block new content: '+combinedBlocs_content)
+        equation[receiverBlockId] = combinedBlocs_content;
+        equation.splice(receiverBlockId+1, 1);
+        this.equation_resolved( bloc1_id[0] );
+        return 'correct';
     }
 
     static trad(mess)
@@ -412,7 +475,11 @@ export default class Interactions
             noEqualBloc:`This block is not equal to the selection.`,
             noBlocSelectedEq:`I need almost one selected block to know what equation.`,
             tooMuchBlocs:`Too much blocks in the game. Combine blocs to do some space.`,
-            notCancelOut:`Arf! These two blocks do not cancel each other out.`
+            notCancelOut:`Arf! These two blocks do not cancel each other out.`,
+            combinedLength:`Oh Oh! Combined block content to long. Max. 7.`,
+            twoSelectedBlocksNeeded:`Euh... Not enough blocks selected. 2 needed.`,
+            Only2blocks:`Only two blocks, you must to convert them manually.`,
+            twoBlocksNotStuck:`You can combine only two stuck blocks.`
         };
         if(!/^err:/.test(mess))
         {
@@ -422,5 +489,16 @@ export default class Interactions
         {
             return traduc[mess.replace('err:','')] ?? mess;
         }
+    }
+
+    static score(eqId)
+    {
+        if(Server.getMove(eqId)>=0)
+        {
+            console.log('move counter: '+Server.getMove(eqId));
+            if(!this.equation_resolved(eqId)){ Server.add100_toScore();console.log('+100!') }
+            return;
+        }
+        console.log('no score change');
     }
 }

@@ -29,6 +29,9 @@
 
 .ludi-actions {
   cursor: pointer;
+}
+
+.w-32px {
   width: 32px;
 }
 
@@ -97,7 +100,7 @@
 }
 
 .ludinewbloc {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: flex-start;

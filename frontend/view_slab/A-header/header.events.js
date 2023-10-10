@@ -19,6 +19,11 @@ export default function(data)
                 Interactions.unselectAll();
                 ludiscreencess.alert();
             }
+        }],
+        '#combine2blocs':['click',function(){
+            let mess = Interactions.combine2blocs();
+            if(mess!=='correct'){ alert(Interactions.trad(mess)); }
+            else{ Interactions.unselectAll(); }
         }]
     };
 }
