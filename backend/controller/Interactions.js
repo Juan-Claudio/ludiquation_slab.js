@@ -2,6 +2,8 @@ import Server from "../model/Server.js";
 
 export default class Interactions
 {        
+    static resolved_equations_nb = new Array(8).fill(false);
+    
     static blocId_toIntArr(str)//:[int,int]
     {
         return (
@@ -47,6 +49,7 @@ export default class Interactions
     {
         let equation = Server.get_equation(eqId);
         let unknown = equation[0].replace('+','');
+        let nb_resolved_eq = 0;
 
         console.info(`Is win with eq: [${equation.join('][')}] \nUnknown: ${unknown}\n`);
 
@@ -56,7 +59,15 @@ export default class Interactions
         
         Server.add500_toScore()
         Server.addBonus_toScore(eqId);
-        console.log('+500!!')
+        this.resolved_equations_nb[eqId]=true;
+        
+        nb_resolved_eq = this.resolved_equations_nb
+            .reduce((preVal, currVal, id)=>{
+                if(id===1){ preVal = (preVal===true) ? 1 : 0; }
+                return (currVal===true) ? preVal+=1 : preVal; }
+            );
+        
+        if(nb_resolved_eq===Server.equationsData().equations.length){ Server.level_up(); }
         return true;
     }
 

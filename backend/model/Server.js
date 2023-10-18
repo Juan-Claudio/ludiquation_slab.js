@@ -36,6 +36,13 @@ export default class Server
     static add500_toScore(){ this.#score_level.score += 500; }
     static addBonus_toScore(eqId){ this.#score_level.score += 100*this.getMove(eqId); }
 
+    static level_up()
+    {
+        if(this.#score_level.level<this.#equations_data.length)
+        { this.#score_level.level++; }
+        else{ alert('Game over: Your win!\nMore exercices comming soon.') }
+    }
+
     static select_bloc(bloc)
     {
         if(this.#selected_blocs.length>1){ return false; }

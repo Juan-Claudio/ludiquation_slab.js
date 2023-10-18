@@ -1,4 +1,4 @@
-const score_level = { score:0, level:1 };
+const score_level = { score:0, level:0 };
 const equations_data = [
     {
         moves:[8,4,8,2,12,6,6],
